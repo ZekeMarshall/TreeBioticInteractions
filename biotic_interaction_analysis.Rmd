@@ -1,0 +1,1112 @@
+---
+title: "biotic_interactions_analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(rglobi)
+
+```
+
+## Introduction
+
+The aim of this analysis is to identify the number of biotic interactions between species from six taxon groups (Invertebrates, Birds, Mammals, Lichen, Bryophytes, and Fungi) and each of the native trees of the British Isles.
+
+## Data Paths
+
+```{r paths message=FALSE}
+
+# Establish path to "PLANTATT_19_Nov_08.xls" file
+plantatt_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Plantae/PLANTATT_19_Nov_08/PLANTATT_19_Nov_08.xls"
+
+# Establish path to "lichen_species_database10Aug2021.csv" file
+native_lichens_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Lichens/lichen_species_database10Aug2021.csv"
+
+# Establish path to "fungi_species_names.xlsx" file
+native_fungi_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Fungi/fungi_species_names.xlsx"
+
+# Establish path to "Bryoatt_updated_2017.xls" file
+native_bryophytes_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Bryophytes/Bryoatt_updated_2017.xls"
+
+# Establish path to "BOU_British_List_9th_post52_v5-IOC11_1_30-June-2021.xlsx" file
+native_birds_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Birds/BOU_British_List_9th_post52_v5-IOC11_1_30-June-2021.xlsx"
+
+# Establish path to "MammalSociety_RedList_30June21.xlsx" file
+native_mammals_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mammals/MammalSociety_RedList_30June21.xlsx"
+
+# Establish path to "..." file
+native_insects_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Insects/"
+
+# Establish path to "interactions-13-08-2021.csv" file 
+gbid_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/GBID/interactions-13-08-2021.csv"
+
+# Establish path to "interactions_selected_species-13-08-2021.csv" file
+gbid_path_selected_species <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/GBID/interactions_nativetrees-13-08-2021.csv"
+
+# Establish path to "DBIFInteractionFrequencies.csv" file
+dbif_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Insects/33a825f3-27cb-4b39-b59c-0f8182e8e2e4/33a825f3-27cb-4b39-b59c-0f8182e8e2e4/data/DBIFInteractionFrequencies.csv"
+
+# Establish path to "Lichen records by host tree.xlsx" file
+bls_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Lichens/Lichen records by host tree.xlsx"
+
+# Establish path to "Fungi_associations.csv" file
+frdbi_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Fungi/Fungi_associations.csv"
+
+# Establish path to "OakEcol_Species.csv" file
+mitchell2019_oak_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_Species.csv"
+
+# Establish path to "OakEcol_Alternative_Trees.csv" file
+mitchell2019_other_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_Alternative_Trees.csv"
+
+# Establish path to "OakEcol_References.csv" file
+mitchell2019_refs_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_References.csv"
+
+# Establish path to "AshEcol.xlsx" file
+mitchell2014_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2014) - Fraxinus excelsior/AshEcol.xlsx"
+
+```
+
+## Native Trees PLANTATT
+
+```{r plantatt, warning=FALSE}
+
+# Get native tree names
+native_trees_plantatt <- readxl::read_xls(path = plantatt_path, sheet = "Data") |>
+  # Filter for native tree species
+  dplyr::filter(
+    # Species status defined as "Native"
+    NS == "N",
+    # Height greater than 400cm (4m)           
+    Hght >=400,
+    # Woodiness equal to "Woody"
+    W =="w",
+    # Excluding species which are climbers
+    !`Taxon name` %in% c("Clematis vitalba", "Hedera helix", "Lonicera periclymenum"),
+    # Excluding other unwanted observations
+    !`Taxon name` %in% c("Malus sylvestris sens.str.", "Sorbus aria agg.")
+    ) |> 
+  # Rename species
+  dplyr::mutate(`Taxon name` = 
+                  dplyr::case_when(
+                    `Taxon name` == "Malus sylvestris sens.lat." ~ "Malus sylvestris",
+                    `Taxon name` == "Populus nigra sens.lat." ~ "Populus nigra",
+                    TRUE ~ as.character(`Taxon name`)
+))
+
+
+```
+
+A list of 43 species is returned from these criteria compared to the 46 trees manually established above. Namely the following three species are excluded: *Tilia cordata x platyphyllos (T. x europaea)* as it is classified as a "*Spontaneous hybrid between two native parents"*, *Hippophae rhamnoides* as it is recorded as only reaching 3m in height, and *Ligustrum vulgare* as it is recorded as only reaching 3m in height.
+
+```{r native_species_and_genus}
+
+native_trees_manual <- c(
+  "Acer campestre",
+  "Alnus glutinosa",
+  "Arbutus unedo",
+  "Betula pendula",
+  "Betula pubescens",
+  "Buxus sempervirens",
+  "Carpinus betulus",
+  "Cornus sanguinea",
+  "Corylus avellana",
+  "Crataegus laevigata",
+  "Crataegus monogyna",
+  "Euonymus europaeus",
+  "Fagus sylvatica",
+  "Frangula alnus",
+  "Fraxinus excelsior",
+  "Hippophae rhamnoides",
+  "Ilex aquifolium",
+  "Juniperus communis",
+  "Ligustrum vulgare",
+  "Malus sylvestris",
+  "Pinus sylvestris",
+  "Populus nigra",
+  "Populus tremula",
+  "Prunus avium",
+  "Prunus padus",
+  "Prunus spinosa",
+  "Quercus petraea",
+  "Quercus robur",
+  "Rhamnus cathartica",
+  "Salix caprea",
+  "Salix cinerea",
+  "Salix pentandra",
+  "Salix phylicifolia",
+  "Sambucus nigra",
+  "Sorbus aria",
+  "Sorbus aucuparia",
+  "Sorbus domestica",
+  "Sorbus torminalis",
+  "Taxus baccata",
+  "Tilia cordata",
+  "Tilia platyphyllos",
+  "Tilia x europaea",
+  "Ulmus glabra",
+  "Ulmus minor",
+  "Viburnum lantana",
+  "Viburnum opulus")
+
+native_trees_genus <- c(
+  "Acer",
+  "Alnus",
+  "Arbutus",
+  "Betula",
+  "Buxus",
+  "Carpinus",
+  "Cornus",
+  "Corylus",
+  "Crataegus",
+  "Euonymus",
+  "Fagus",
+  "Frangula",
+  "Fraxinus",
+  "Hippophae",
+  "Ilex",
+  "Juniperus",
+  "Ligustrum",
+  "Malus",
+  "Pinus",
+  "Populus",
+  "Prunus",
+  "Quercus",
+  "Rhamnus",
+  "Salix",
+  "Sambucus",
+  "Sorbus",
+  "Taxus",
+  "Tilia",
+  "Ulmus",
+  "Viburnum")
+
+tree_genus_and_species <- c(native_trees_genus, native_trees_manual)
+
+```
+
+## Select Species for Analysis
+
+```{r select_species}
+
+# selected_species <- c("Castanea sativa")
+
+selected_species <- native_trees_manual
+
+```
+
+## Native Species Names By Taxon Group
+
+```{r native_species_names, warning=FALSE}
+
+# Get native lichen names
+native_lichens <- read.csv(file = native_lichens_path)|> 
+  dplyr::select(Name, `Current.Taxon.Name`)|> 
+  tidyr::pivot_longer(cols = everything()) |> 
+  dplyr::select(-name) |> 
+  dplyr::rename("Species" = "value") |> 
+  dplyr::distinct()
+
+native_lichen_vector <- native_lichens$Species |> as.character()
+
+# Get native fungi names
+native_fungi <- readxl::read_xlsx(path = native_fungi_path) |> 
+  dplyr::select(NameOfFungus, RecommendedName) |> 
+  tidyr::pivot_longer(cols = everything()) |> 
+  dplyr::select(-name) |> 
+  dplyr::rename("Species" = "value") |> 
+  dplyr::distinct()
+
+native_fungi_vector <- native_fungi$Species |> as.character()
+
+# Get native bryophyte names
+native_bryophytes <- readxl::read_xls(path = native_bryophytes_path, sheet = "BRYOATT") |> 
+  dplyr::select(Name_new, `Taxon name`)|> 
+  tidyr::pivot_longer(cols = everything()) |> 
+  dplyr::select(-name) |> 
+  dplyr::rename("Species" = "value") |> 
+  dplyr::distinct()
+
+native_bryophytes_vector <- native_bryophytes$Species |> as.character()
+
+# Get native bird names
+native_birds <- readxl::read_xlsx(path = native_birds_path, sheet = "British List Categories A-C") |> 
+  dplyr::select(`Scientific name`) |> 
+  dplyr::distinct()
+
+native_birds_vector <- native_birds$`Scientific name` |> as.character()
+
+# get native mammal names
+native_mammals <- readxl::read_xlsx(path = native_mammals_path, sheet = "RED LIST TABLE", skip = 2) |> 
+  dplyr::rename("Order" = "...1") |> 
+  dplyr::slice(-1) |> 
+  dplyr::slice(-((dplyr::n()-1):dplyr::n())) |> 
+  tidyr::fill(Order, .direction = "down") |> 
+  dplyr::select(`Taxonomic name`) |> 
+  dplyr::distinct()
+  
+native_mammals_vector <- native_mammals$`Taxonomic name` |> as.character()
+
+# Get native insect names
+
+
+```
+
+## Mitchell et al (2014) Read Data
+
+```{r read_mitchell2014}
+
+mitchell2014_data_ash <- readxl::read_xlsx(path = mitchell2014_data_path, 
+                                           sheet = "Ash associated sp")
+
+mitchell2014_data_other <- readxl::read_xlsx(path = mitchell2014_data_path, 
+                                             sheet = "Assessment of alternative trees")
+
+```
+
+## Mitchell et al (2019) Read Data
+
+```{r read_mitchell2019}
+
+mitchell2019_data_oak <- read.csv(file = mitchell2019_oak_data_path)
+
+mitchell2019_data_other <- read.csv(file = mitchell2019_other_data_path)
+
+mitchell2019_refs <- read.csv(file = mitchell2019_refs_path)
+
+```
+
+## Mitchell et al (2014) Analyse Data
+
+```{r analyse_mitchell2014}
+
+# Clean data for Ash-associated species
+mitchell2014_data_ash_final <- mitchell2014_data_ash |> 
+  dplyr::select(`Species - Latin`) |>
+  dplyr::rename(target_taxon_name = "Species - Latin") |> 
+  dplyr::mutate(
+    source_taxon_name = "Fraxinus excelsior",
+    study_source_citation = "Mitchell et al (2014) - Assessing and addressing the impacts of ash dieback on UK woodlands and trees of conservation importance (Phase 2)"
+    ) |> 
+  dplyr::relocate(source_taxon_name, .before = target_taxon_name)
+
+
+# Clean data for other tree-associated species
+mitchell2014_data_other_final <- mitchell2014_data_other |> 
+  dplyr::filter(Association %in% c("Yes", "Likely", "Rare")) |> 
+  dplyr::select(`Species - Latin`, `Tree alternative - Latin`)|>
+  dplyr::rename(target_taxon_name = "Species - Latin", 
+                source_taxon_name = "Tree alternative - Latin") |>
+  dplyr::mutate(
+    study_source_citation = "Mitchell et al (2014) - Assessing and addressing the impacts of ash dieback on UK woodlands and trees of conservation importance (Phase 2)"
+    ) |> 
+  dplyr::relocate(source_taxon_name, .before = target_taxon_name) |> 
+  tidyr::separate_rows(source_taxon_name, sep = stringr::fixed("/")) |> 
+  dplyr::mutate(
+    source_taxon_name = dplyr::case_when(
+      source_taxon_name == "pendula" ~ "Betula pendula",
+      source_taxon_name == "petraea" ~ "Quercus petraea",
+      source_taxon_name == "glabra" ~ "Ulmus glabra",
+      TRUE ~ as.character(source_taxon_name))) |>
+  dplyr::distinct()
+
+mitchell2014_data_final <- rbind(mitchell2014_data_ash_final,
+                                 mitchell2014_data_other_final)
+```
+
+## Mitchell et al (2019) Analyse Data
+
+```{r analyse_mitchell2019}
+
+# Establish and clean the references as best as possible
+mitchell2019_refs_final <- mitchell2019_refs |>
+  dplyr::mutate_all(list(~dplyr::na_if(.,""))) |> 
+  dplyr::select(ï..Reference_Number, 
+                 Authors, 
+                 Year, 
+                 Paper_Title, 
+                 Publication_title, 
+                 Database_title) |> 
+  dplyr::mutate(study_source_citation = glue::glue("{Authors}, 
+                                                   {Year}, 
+                                                   {Paper_Title}, 
+                                                   {Publication_title},
+                                                   {Database_title}",
+                                                   .sep = "",
+                                                   .na = ""))
+
+# Clean Quercus species names
+mitchell2019_data_oak_cleaned <- mitchell2019_data_oak |> 
+  dplyr::select(`ï..Species_Latin`, Quercus_species, Reference_Number) |> 
+  dplyr::rename(target_taxon_name = "ï..Species_Latin", 
+                source_taxon_name = "Quercus_species", 
+                study_source_citation = "Reference_Number") |>
+  dplyr::relocate(source_taxon_name, .before = target_taxon_name) |>
+  dplyr::mutate(
+    source_taxon_name = 
+      stringr::str_replace(source_taxon_name,
+                           pattern = stringr::fixed(" & "),
+                           replacement = "/")) |>
+  tidyr::separate_rows(source_taxon_name, sep = stringr::fixed("/")) |>
+  dplyr::mutate(
+    source_taxon_name = 
+      stringr::str_replace(source_taxon_name,
+                           pattern = stringr::fixed("Q."),
+                           replacement = "Quercus")) |> 
+  dplyr::mutate(
+    source_taxon_name = dplyr::case_when(
+      source_taxon_name == "petraea" ~ "Quercus petraea",
+      TRUE ~ as.character(source_taxon_name))) |> 
+  dplyr::distinct()
+  
+
+# Split interactions with multiple sources into individual observations
+mitchell2019_data_oak_final <- mitchell2019_data_oak_cleaned |> 
+  tidyr::separate_rows(study_source_citation, sep = "//,") |>
+  dplyr::mutate(
+    study_source_citation = 
+      stringr::str_replace(study_source_citation,
+                           pattern = "//s",
+                           replacement = "")) |> 
+  # Temporarily make all sources equal to Mitchell et al (2019)
+  dplyr::mutate(study_source_citation = "Mitchell et al (2019) - Oak-associated biodiversity in the UK") |> 
+  dplyr::distinct()
+
+
+# Analyse data for other native tree species
+mitchell2019_data_other_cleaned <- mitchell2019_data_other |> 
+  dplyr::filter(Association %in% c("Yes_Sp", "Yes_Gen", "Parasite", "Probable", "Rarely_SP", "Rarely_Gen", "Rarely_Sp")) |> 
+  dplyr::select(`ï..Species_Latin`, 
+                Alternative_Latin, 
+                Reference_Number, 
+                Association) |> 
+  dplyr::rename(target_taxon_name = "ï..Species_Latin", 
+                source_taxon_name = "Alternative_Latin", 
+                study_source_citation = "Reference_Number") |>
+  dplyr::relocate(source_taxon_name, .before = target_taxon_name) |> 
+  dplyr::mutate(
+    Association = dplyr::case_when(
+      Association == "Yes_Sp" ~ "Species",
+      Association == "Yes_Gen" ~ "Genus",
+      Association == "Parasite" ~ "Species",
+      Association == "Probable" ~ "Species",
+      Association == "Rarely_SP" ~ "Species",
+      Association == "Rarely_Gen" ~ "Genus",
+      Association == "Rarely_Sp" ~ "Species",
+      TRUE ~ as.character(Association))) |> 
+  # Temporarily make all sources equal to Mitchell et al (2019)
+  dplyr::mutate(study_source_citation = "Mitchell et al (2019) - Oak-associated biodiversity in the UK")
+
+
+# Remove species identifier on observations that were recorded as associating with
+# a tree genus only.
+mitchell2019_data_other_final <- mitchell2019_data_other_cleaned |>
+  dplyr::mutate(
+    source_taxon_name = ifelse(
+      Association == "Genus", 
+      stringr::str_remove(string = source_taxon_name,
+                          pattern = "\\s\\w*"), 
+      source_taxon_name)) |> 
+  dplyr::select(-Association)
+
+mitchell2019_data_final <- rbind(mitchell2019_data_other_final, mitchell2019_data_oak_final)
+```
+
+## Mitchell Data Interactions
+
+Collate the data from Mitchell et al (2014) and Mitchell et al (2019).
+
+```{r mitchell_collate}
+
+# Collate 104 and 2019 data
+mitchell_tree_all_interactions <- rbind(mitchell2019_data_final, mitchell2014_data_final)
+
+# Collate unique records, and form a vector/list of sources
+# This method needs to change
+mitchell_tree_all_interactions <- aggregate(mitchell_tree_all_interactions[3], mitchell_tree_all_interactions[-3], unique)
+
+# Temporarily get invertebrate names from Mitchell 2014 data, rather than a complete UK list
+mitchell_2014_invert_other <- mitchell2014_data_other |> 
+  dplyr::filter(Group == "Invert")
+
+mitchell_2014_invert_ash <- mitchell2014_data_ash |> 
+  dplyr::filter(Group == "Invert")
+
+mitchell_2014_invert_other_uniq <- data.frame(
+  Species = unique(mitchell_2014_invert_other$`Species - Latin`)
+  )
+
+mitchell_2014_invert_ash_uniq <- data.frame(
+  Species = unique(mitchell_2014_invert_ash$`Species - Latin`)
+  )
+
+mitchell_2014_invert_uniq <- rbind(mitchell_2014_invert_other_uniq, mitchell_2014_invert_ash_uniq) |> 
+  dplyr::distinct()
+
+
+# Temporarily get invertebrate names from Mitchell 2019 data, rather than a complete UK list
+mitchell_2019_invert_oak <- mitchell2019_data_oak |> 
+  dplyr::filter(Group2 == "Invert")
+
+mitchell_2019_invert_uniq <- data.frame(
+  Species = unique(mitchell_2019_invert_oak$`ï..Species_Latin`)
+  )
+
+# Collate 2014 and 2019 invertebrates
+mitchell_invertebrates <- rbind(mitchell_2014_invert_uniq,
+                                mitchell_2019_invert_uniq)
+
+mitchell_invertebrates <- mitchell_invertebrates$Species
+
+```
+
+Filter the Mitchell data for interactions by taxon group to only include species present in the UK.
+
+```{r mitchell_to_taxon}
+
+
+# Lichen interactions
+mitchell_tree_lichen_interations <- mitchell_tree_all_interactions |>
+  dplyr::filter(target_taxon_name %in% native_lichen_vector) |>
+  dplyr::distinct()
+
+# Fungi interactions
+mitchell_tree_fungi_interations <-  mitchell_tree_all_interactions |>
+  dplyr::filter(target_taxon_name %in% native_fungi_vector) |>
+  dplyr::distinct()
+
+# Bryophyte interactions
+mitchell_tree_bryophytes_interations <-  mitchell_tree_all_interactions |>
+  dplyr::filter(target_taxon_name %in% native_bryophytes_vector) |>
+  dplyr::distinct()
+
+# Bird interactions
+mitchell_tree_birds_interations <-  mitchell_tree_all_interactions |>
+  dplyr::filter(target_taxon_name %in% native_birds_vector) |>
+  dplyr::distinct()
+
+# Mammal interactions
+mitchell_tree_mammals_interations <-  mitchell_tree_all_interactions |>
+  dplyr::filter(target_taxon_name %in% native_mammals_vector) |>
+  dplyr::distinct()
+
+# Invertebrate interactions
+mitchell_tree_invertebrates_interations <-  mitchell_tree_all_interactions |>
+  dplyr::filter(target_taxon_name %in% mitchell_invertebrates) |>
+  dplyr::distinct()
+
+```
+
+## Insects BRC DBIF
+
+Get Biological Records Centre (BRC) Database of Insects and their Food plants (DBIF) data
+
+```{r dbif}
+
+dbif_data <- read.csv(file = dbif_path) |> 
+  dplyr::select(-Interaction.Frequency) |> 
+  dplyr::rename(source_taxon_name = "Plant.Species.Name", 
+                target_taxon_name = "Insect.Species.Name", 
+                study_source_citation = "DBIF.Source") |> 
+  dplyr::distinct()
+
+dbif_insects <- unique(dbif_data$target_taxon_name)
+
+# If there is an association for a species, we know there is also an association within its genus.
+
+```
+
+## Lichen BLS Database
+
+Analyse Data from the British Lichen Society (BLS)
+
+Code fixes detemined in conjunction with the BLS. This can be removed when the updated data is available.
+
+```{r bls}
+
+
+bls_data <- readxl::read_xlsx(path = bls_data_path, sheet = "data") |> 
+  dplyr::rename(Lichen_species = Species,
+                Host_tree = `Host tree`)
+
+bls_codes <- readxl::read_xlsx(path = bls_data_path, sheet = "codes_new") |> 
+  dplyr::rename(Host_tree = `Tree hosts`,
+                Tree_species = `...2`)
+
+# Fix incorrect codes
+bls_data_fixedcodes <- bls_data |> 
+  dplyr::mutate(
+    Host_tree = dplyr::case_when(
+      Host_tree == "CAB" ~ "CAb",
+      Host_tree == "Cac" ~ "CAc",
+      Host_tree == "CAC" ~ "CAc",
+      Host_tree == "CAes" ~ "CAe",
+      Host_tree == "CAg" ~ "CAg", # ?
+      Host_tree == "CAI" ~ "CAl",
+      Host_tree == "CALb" ~ "CLb",
+      Host_tree == "CAlc" ~ "CAlc", # ?
+      Host_tree == "CAll" ~ "CAl",
+      Host_tree == "CAm" ~ "CAm", # ?
+      Host_tree == "CAP" ~ "CAp",
+      Host_tree == "Cap" ~ "CAp",
+      Host_tree == "CAPl" ~ "CApl",
+      Host_tree == "Capl" ~ "CApl",
+      Host_tree == "CApm" ~ "CApm", # ?
+      Host_tree == "CAps" ~ "CAp",
+      Host_tree == "CAr" ~ "CAr", # ?
+      Host_tree == "CAs" ~ "CAs", # ?
+      Host_tree == "CAsb" ~ "CSb",
+      Host_tree == "CASb" ~ "CSb",
+      Host_tree == "CASPl" ~ "CASPl", # ?
+      Host_tree == "CAt" ~ "CAt", # ?
+      Host_tree == "CAu" ~ "CAu", # ?
+      Host_tree == "CAx" ~ "CAx", # ?
+      Host_tree == "CB" ~ "CBt",
+      Host_tree == "Cb" ~ "CBt", 
+      Host_tree == "cb" ~ "CBt",
+      Host_tree == "CBa" ~ "CBa", # ?
+      Host_tree == "CBd" ~ "CBd", # ?
+      Host_tree == "CBe" ~ "CBe", # ?
+      Host_tree == "Cbe" ~ "Cbe", # ?
+      Host_tree == "CBp" ~ "CBp", # ?
+      Host_tree == "CBr" ~ "CBr", # ?
+      Host_tree == "CBtCPp" ~ "CBt.CPp", # Split!
+      Host_tree == "CBu" ~ "CBu", # ?
+      Host_tree == "CBw" ~ "CBw", # ?
+      Host_tree == "cbx" ~ "CBx",
+      Host_tree == "CBy" ~ "CBy", # ?
+      Host_tree == "CC" ~ "CC", # ?
+      Host_tree == "CCa" ~ "CCo",
+      Host_tree == "CCb" ~ "CCb", # ?
+      Host_tree == "CCCt" ~ "CCt",
+      Host_tree == "CCd" ~ "CCd", # ?
+      Host_tree == "CCF" ~ "CCf",
+      Host_tree == "CCFg" ~ "CCFg", # ?
+      Host_tree == "CCh" ~ "CCh", # ?
+      Host_tree == "CCI" ~ "CCl",
+      Host_tree == "CCi" ~ "CCl",
+      Host_tree == "CCk" ~ "CCk", # ?
+      Host_tree == "CCL" ~ "CCl",
+      Host_tree == "CCn" ~ "CCn", # ?
+      Host_tree == "CCot" ~ "CCot", # ?
+      Host_tree == "CCpCTi" ~ "CCp.CTi", # Split!
+      Host_tree == "CCq" ~ "CCq", # ?
+      Host_tree == "CCr" ~ "CCr", # ?
+      Host_tree == "CCst" ~ "CCst", # ?
+      Host_tree == "CCT" ~ "CCt",
+      Host_tree == "CCTb" ~ "CCTb", # ?
+      Host_tree == "CCu" ~ "CU",
+      Host_tree == "CCU" ~ "CU",
+      Host_tree == "CCv" ~ "CCv", # ?
+      Host_tree == "CDc" ~ "CDc", # ?
+      Host_tree == "CDf" ~ "CDf", # ?
+      Host_tree == "CDm" ~ "CDm", # ?
+      Host_tree == "CDs" ~ "CDs", # ?
+      Host_tree == "CDx" ~ "CDx", # ?
+      Host_tree == "Ce" ~ "CCe",
+      Host_tree == "CEc" ~ "CEc", # ?
+      Host_tree == "CEm" ~ "CEm", # ?
+      Host_tree == "CEx" ~ "CEx", # ?
+      Host_tree == "cf" ~ "cf", # ?
+      Host_tree == "Cf" ~ "Cf", # ?
+      Host_tree == "CF" ~ "CF", # ?
+      Host_tree == "cf comment" ~ "cf comment", # ?
+      Host_tree == "cf. comment" ~ "cf. comment", # ?
+      Host_tree == "cf.comment" ~ "cf.comment", # ?
+      Host_tree == "CFa" ~ "CFg",
+      Host_tree == "Cfa" ~ "CFg",
+      Host_tree == "CFc" ~ "CFc", # ?
+      Host_tree == "CFe" ~ "CFx",
+      Host_tree == "CFg:Z0685" ~ "CFg",
+      Host_tree == "CFg:Z1087" ~ "CFg",
+      Host_tree == "CFgTb" ~ "CFg",
+      Host_tree == "CFl" ~ "CFl", # ?
+      Host_tree == "CFp" ~ "CFp", # ?
+      Host_tree == "CFq" ~ "CFq", # ?
+      Host_tree == "CFr" ~ "CFr", # ?
+      Host_tree == "CFx.CAp" ~ "CFx.CAp", # Split!
+      Host_tree == "CFx.CTw" ~ "CFx.CTw", # Split!
+      Host_tree == "CFxCAPs" ~ "CFx.CAPs", # Split!
+      Host_tree == "CFxCQ" ~ "CFx.CQ", # Split!
+      Host_tree == "CFxCSm" ~ "CFx.CSm", # Split!
+      Host_tree == "CFxCTb" ~ "CFx.CTb", # Split!
+      Host_tree == "CFzx" ~ "CFx",
+      Host_tree == "CG" ~ "CG", # ?
+      Host_tree == "CH" ~ "CH",
+      Host_tree == "Ch^" ~ "CH^",
+      Host_tree == "CHalimione" ~ "CHalimione", # ?
+      Host_tree == "CHd" ~ "CHe",
+      Host_tree == "Che" ~ "CHe",
+      Host_tree == "CHi" ~ "CHi", # ?
+      Host_tree == "CHo" ~ "CHo", # ?
+      Host_tree == "CHp" ~ "CHp", # ?
+      Host_tree == "Cht" ~ "Cht", # ?
+      Host_tree == "Cix" ~ "CIx",
+      Host_tree == "CIX" ~ "CIx",
+      Host_tree == "CJ" ~ "CJp",
+      Host_tree == "CJPr" ~ "CJp",
+      Host_tree == "Cju" ~ "CJu",
+      Host_tree == "Cl" ~ "CCl",
+      Host_tree == "CLa" ~ "CLx",
+      Host_tree == "Cla" ~ "CLx",
+      Host_tree == "CLb" ~ "CLb", # ?
+      Host_tree == "CLg" ~ "CLg", # ?
+      Host_tree == "Clm" ~ "Clm", # ?
+      Host_tree == "CLm" ~ "CLm", # ?
+      Host_tree == "CLo" ~ "CLo", # ?
+      Host_tree == "CLv" ~ "CLv", # ?
+      Host_tree == "clx" ~ "CLx",
+      Host_tree == "Clx" ~ "CLx", # ?
+      Host_tree == "CM" ~ "CM", # ?
+      Host_tree == "Cm" ~ "Cm", # ?
+      Host_tree == "CMg" ~ "CMg", # ?
+      Host_tree == "CMh" ~ "CMh", # ?
+      Host_tree == "CMo" ~ "CMo", # ?
+      Host_tree == "CMs" ~ "CMs", # ?
+      Host_tree == "CNa" ~ "CNa", # ?
+      Host_tree == "Co" ~ "CCo",
+      Host_tree == "COM" ~ "COM", # ?
+      Host_tree == "Cort" ~ "Cort", # ?
+      Host_tree == "COt" ~ "COt", # ?
+      Host_tree == "Cot" ~ "Cot", # ?
+      Host_tree == "CPa" ~ "CPra",
+      Host_tree == "CPc.CTw" ~ "CPc.CTw", # Split!
+      Host_tree == "CPca" ~ "CPc",
+      Host_tree == "CPcs" ~ "CPc",
+      Host_tree == "CPi" ~ "CP",
+      Host_tree == "CPi.CBt" ~ "CP.CBt", # Split!
+      Host_tree == "CPla" ~ "CPla", # ?
+      Host_tree == "CPm" ~ "CPm", # ?
+      Host_tree == "CPn" ~ "CP",
+      Host_tree == "CPpt" ~ "CPp",
+      Host_tree == "Cpra" ~ "CPra", # ?
+      Host_tree == "CPre" ~ "CPre", # ?
+      Host_tree == "CPrl" ~ "CPrl", # ?
+      Host_tree == "CPRs" ~ "CPrs",
+      Host_tree == "CPs" ~ "CPc",
+      Host_tree == "cps" ~ "CPc",
+      Host_tree == "CPsp" ~ "CPsp", # ?
+      Host_tree == "CPte" ~ "CPt",
+      Host_tree == "CPts" ~ "CPt",
+      Host_tree == "CPyr" ~ "CPy",
+      Host_tree == "CQc" ~ "CQc", # ?
+      Host_tree == "CQl" ~ "CQl", # ?
+      Host_tree == "CQru" ~ "CQ",
+      Host_tree == "CQt" ~ "CQt", # ?
+      Host_tree == "CQ-tw" ~ "CQ",
+      Host_tree == "CQu" ~ "CQ",
+      Host_tree == "Cr" ~ "Cr", # ?
+      Host_tree == "CR" ~ "CR", # ?
+      Host_tree == "CrL" ~ "CrL", # ?
+      Host_tree == "CRo" ~ "CRo", # ?
+      Host_tree == "CRobinia" ~ "CRo",
+      Host_tree == "crs" ~ "CRs", # ?
+      Host_tree == "CRt" ~ "CRt", # ?
+      Host_tree == "Crt" ~ "Crt", # ?
+      Host_tree == "Cru" ~ "CRu", # ?
+      Host_tree == "CRx" ~ "CRx", # ?
+      Host_tree == "CS" ~ "CCs",
+      Host_tree == "Cs" ~ "CCs",
+      Host_tree == "CSal" ~ "CSa", 
+      Host_tree == "CSb. CPp" ~ "CSb.CPp", # Split!
+      Host_tree == "CSba" ~ "CSb",
+      Host_tree == "CSbt" ~ "CSb",
+      Host_tree == "CSc" ~ "CSc", # ?
+      Host_tree == "CSd" ~ "CSd", # ?
+      Host_tree == "CSFx" ~ "CFx",
+      Host_tree == "CSl" ~ "CSl", # ?
+      Host_tree == "CSn" ~ "CSn", # ?
+      Host_tree == "CSo" ~ "CSo", # ?
+      Host_tree == "CSq" ~ "CSq", # ?
+      Host_tree == "CSqd" ~ "CSqd", # ?
+      Host_tree == "CSt" ~ "CSt", # ?
+      Host_tree == "CSu" ~ "CSu", # ?
+      Host_tree == "CSuaeda" ~ "CSuaeda", # ?
+      Host_tree == "CT" ~ "CCt",
+      Host_tree == "Ct" ~ "CCt",
+      Host_tree == "Cte" ~ "Cte", # ?
+      Host_tree == "CTh" ~ "CTh", # ?
+      Host_tree == "Cti" ~ "CTi",
+      Host_tree == "CTl" ~ "CTi",
+      Host_tree == "CTN" ~ "CTN", # ?
+      Host_tree == "CTs" ~ "CTs", # ?
+      Host_tree == "CTt" ~ "CTt", # ?
+      Host_tree == "Cu" ~ "CU",
+      Host_tree == "CÙ" ~ "CU", 
+      Host_tree == "CUl" ~ "CUl", # ?
+      Host_tree == "Curo" ~ "Curo", # ?
+      Host_tree == "CVb" ~ "CVb", # ?
+      Host_tree == "CVi" ~ "CVi", # ?
+      Host_tree == "CVla" ~ "CVla", # ?
+      Host_tree == "CVo" ~ "CVo", # ?
+      Host_tree == "CXo" ~ "CXo", # ?
+      TRUE ~ as.character(Host_tree))
+    )
+
+# Split rows where Host_tree contains two codes separated by a full stop
+bls_data_split_obs <- bls_data_fixedcodes |> 
+  tidyr::separate_rows(Host_tree, sep = "//.")
+
+# Clean data
+bls_data_cleaned <- bls_data_split_obs |> 
+  dplyr::left_join(bls_codes, by = "Host_tree") |> 
+  dplyr::select(-Host_tree, -Records) |> 
+  dplyr::relocate(Tree_species, .before = Lichen_species) |> 
+  dplyr::filter(!is.na(Tree_species)) |> 
+  dplyr::mutate("Source" = "BLS Database") |> 
+  # Align column names with GBID
+  dplyr::rename(source_taxon_name = "Tree_species",
+                target_taxon_name = "Lichen_species",
+                study_source_citation = "Source")
+
+# If there is an association for a species, we know there is also an association within its genus.
+
+```
+
+## Fungi FRDBI Read Data
+
+Analyse Data from the British Mycological Society's Fungal Records Database of Britain and Ireland (FRDBI)
+
+```{r frdbi}
+
+frdbi_data <- read.csv(file = frdbi_path, header = FALSE) |> 
+  magrittr::set_colnames(c("Fungi_species", "Associated_species", "Substrate")) |> 
+  dplyr::mutate(
+    Associated_species = dplyr::case_when(Associated_species == "HippophaÃ« rhamnoides" ~ "Hippophae rhamnoides",
+                                          TRUE ~ as.character(Associated_species)))
+
+frdbi_data_assoc <- frdbi_data |> 
+  dplyr::filter(Associated_species %in% tree_genus_and_species)
+
+
+frdbi_data_cleaned <- frdbi_data_assoc |> 
+  dplyr::select(-Substrate) |> 
+  dplyr::distinct() |> 
+  dplyr::mutate("study_source_citation" = "FRDBI") |> 
+  # Align column names with GBID
+  dplyr::rename(source_taxon_name = "Associated_species",
+                target_taxon_name = "Fungi_species") |> 
+  dplyr::relocate(source_taxon_name, .before = target_taxon_name)
+
+# If there is an association for a species, we know there is also an association within its genus.
+
+```
+
+## GBID Data
+
+Database (GBID)
+
+Here we filter only for native trees, and not their genus. As there is no comprehensive data for the location associated with each observation, selecting the interactions of species and native tree genus may not relate to species of tree which are native or naturalised in the British Isles.
+
+Additionally, as there is no location data, we assume that interactions between native species of each taxon group, and native trees occur in the British Isles, even if they were not recorded in the British Isles - an unavoidable decision.
+
+Firstly, an attempt is made to access the GBID data via the rglobi R package. The rglobi package and associated web API for the GBID has limitations. Jorrit Poelen, the package maintainer recommends downloading the bulk dataset from <https://www.globalbioticinteractions.org/data> for big projects.
+
+```{r gbid_rglobi}
+
+# # Loop through each native tree read GBID data, and bind to a single data frame
+# gbid_tree_all_interactions_rglobi <- data.frame()
+# 
+# for(species in selected_species){
+# 
+#   interaction <- rglobi::get_interactions(taxon = species,
+#                                           interaction.type = rglobi::get_interaction_types()$interaction,
+#                                           returnobservations = T)
+# 
+#   gbid_tree_all_interactions_rglobi <- gbid_tree_all_interactions_rglobi |>
+#     rbind(interaction)
+# 
+# }
+# 
+# gbid_tree_all_interactions_rglobi <- gbid_tree_all_interactions_rglobi |>
+#   dplyr::filter(source_taxon_name %in% selected_species)
+
+# # Check what native tree species aren't in the GBID data
+# gbid_species <- data.frame("Species" = unique(gbid_tree_all_interactions_rglobi$source_taxon_name))
+# 
+# diff <- dplyr::anti_join(x = data.frame("Species" = selected_species), y = gbid_species, by = "Species")
+
+```
+
+Here the entire GBID dataset (downloaded 13-08-2021) is read, yielding the complete number of interactions associated with each species native tree.
+
+```{r gbid_bulk}
+
+# *** Uncomment if required ***
+
+# # Read entire GBID database if required
+# gbid_all_interactions <- data.table::fread(gbid_path)
+# 
+# # Filter entire GBID database for native tree species
+# gbid_selected_species_all_interactions_manual <- gbid_all_interactions |>
+#   dplyr::filter(sourceTaxonName %in% selected_species | targetTaxonName %in% selected_species)
+# 
+# # Write a .csv containing only interactions with selected species
+# write.csv(x = gbid_tree_all_interactions_manual, file = gbid_path_selected_species)
+
+# Read the pre-filtered data for interactions associated with selected species
+gbid_selected_species_all_interactions_raw <- read.csv(file = gbid_path_selected_species)
+
+```
+
+Data obtained from the bulk GBID download is bilateral, i.e. each interaction is described once, and therefore a tree may appear as either the source or the target. To fix this we need to 'swap' the instances where the tree is in the target column to the source column, and 'swap' the corresponding biota which appear in the source column.
+
+```{r sort_gbid}
+
+gbid_selected_species_all_interactions_unsorted <- gbid_selected_species_all_interactions_raw |>
+  dplyr::select(sourceTaxonName, targetTaxonName, sourceCitation)|> 
+  dplyr::rename(study_source_citation = "sourceCitation")
+
+gbid_selected_species_all_interactions_sorted <- gbid_selected_species_all_interactions_unsorted |> 
+  dplyr::mutate(
+    source_taxon_name = ifelse(sourceTaxonName %in% selected_species,
+                               sourceTaxonName, 
+                               targetTaxonName),
+    target_taxon_name = ifelse(targetTaxonName %in% selected_species,
+                               sourceTaxonName,
+                               targetTaxonName)
+    ) |> 
+  dplyr::select(source_taxon_name, target_taxon_name, study_source_citation) |> 
+  dplyr::filter(source_taxon_name != "no name",
+                target_taxon_name != "no name")
+
+# Establish the final data frame containing GBID selected species interactions
+gbid_selected_species_all_interactions_final <- gbid_selected_species_all_interactions_sorted
+
+
+```
+
+## GBID Filter Native Species
+
+Here the data is filtered by searching for names which occur in the most reliable lists of native species of lichen, fungi, bryophytes, birds, mammals, and insects available.
+
+```{r gbid_to_taxon}
+# Get data for interactions between native species of lichen and native species of tree from the GBID
+gbid_lichen_interations <- gbid_selected_species_all_interactions_final |> 
+  dplyr::filter(target_taxon_name %in% native_lichen_vector) |> 
+  dplyr::distinct()
+
+# Get data for interactions between native species of fungi and native species of tree from the GBID
+gbid_fungi_interations <- gbid_selected_species_all_interactions_final |> 
+  dplyr::filter(target_taxon_name %in% native_fungi_vector) |> 
+  dplyr::distinct()
+
+# Get data for interactions between native species of bryophyte and native species of tree from the GBID
+gbid_bryophytes_interations <- gbid_selected_species_all_interactions_final |> 
+  dplyr::filter(target_taxon_name %in% native_bryophytes_vector) |> 
+  dplyr::distinct()
+
+# Get data for interactions between native species of birds and native species of tree from the GBID
+gbid_birds_interations <- gbid_selected_species_all_interactions_final |> 
+  dplyr::filter(target_taxon_name %in% native_birds_vector) |> 
+  dplyr::distinct()
+
+# Get data for interactions between native species of mammals and native species of tree from the GBID
+gbid_mammals_interations <- gbid_selected_species_all_interactions_final |> 
+  dplyr::filter(target_taxon_name %in% native_mammals_vector) |> 
+  dplyr::distinct()
+
+# Invertebrates
+# Temporarily filter GBID data for invertebrates using Mitchell inverts & DBIF insects
+temp_inverts <- c(mitchell_invertebrates, dbif_insects) |> 
+  unique()
+
+gbid_invertebrates_interations <- gbid_selected_species_all_interactions_final |>
+  dplyr::filter(target_taxon_name %in% temp_inverts) |>
+  dplyr::distinct()
+
+```
+
+## Collate Data For Each Taxon Group
+
+I need to ensure that all data sources are either filtered for native trees by this point.
+
+```{r collate_data}
+
+# Lichen
+# Bind data
+all_lichen_data <- rbind(bls_data_cleaned, 
+                         gbid_lichen_interations,
+                         mitchell_tree_lichen_interations)
+
+# Aggregate unique interactions and collate multiple sources into a list
+all_lichen_data <- aggregate(all_lichen_data[3], 
+                             all_lichen_data[-3], 
+                             unique)
+
+# Fungi
+# Bind data
+all_fungi_data <- rbind(frdbi_data_cleaned, 
+                        gbid_fungi_interations,
+                        mitchell_tree_fungi_interations)
+
+# Aggregate unique interactions and collate multiple sources into a list
+all_fungi_data <- aggregate(all_fungi_data[3], 
+                            all_fungi_data[-3], 
+                            unique)
+
+# Bryophytes
+# Bind data
+all_bryophytes_data <- rbind(gbid_bryophytes_interations,
+                             mitchell_tree_bryophytes_interations)
+
+# Aggregate unique interactions and collate multiple sources into a list
+all_bryophytes_data <- aggregate(all_bryophytes_data[3], 
+                                 all_bryophytes_data[-3], 
+                                 unique)
+
+
+# Birds
+# Bind data
+all_birds_data <- rbind(gbid_birds_interations,
+                        mitchell_tree_birds_interations)
+
+# Aggregate unique interactions and collate multiple sources into a list
+all_birds_data <- aggregate(all_birds_data[3], 
+                            all_birds_data[-3], 
+                            unique)
+
+# Mammals
+# Bind data
+all_mammals_data <- rbind(gbid_mammals_interations,
+                          mitchell_tree_mammals_interations)
+
+# Aggregate unique interactions and collate multiple sources into a list
+all_mammals_data <- aggregate(all_mammals_data[3], 
+                              all_mammals_data[-3], 
+                              unique)
+
+# Invertebrates
+# Bind data
+all_invertebrates_data <- rbind(dbif_data,
+                                gbid_invertebrates_interations,
+                                mitchell_tree_invertebrates_interations)
+
+# Aggregate unique interactions and collate multiple sources into a list
+all_invertebrates_data <- aggregate(all_invertebrates_data[3], 
+                                    all_invertebrates_data[-3], 
+                                    unique)
+
+
+```
+
+## Final Tidy Data Frame
+
+```{r final_data}
+
+# Lichen
+all_lichen_data_selected_species <- all_lichen_data |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Lichen", .before = study_source_citation)
+
+# Fungi
+all_fungi_data_selected_species <- all_fungi_data |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Fungi", .before = study_source_citation)
+
+# Bryophytes
+all_bryophytes_data_selected_species <- all_bryophytes_data |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Bryophytes", .before = study_source_citation)
+
+# Birds
+all_birds_data_selected_species <- all_birds_data |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Birds", .before = study_source_citation)
+
+# Mammals
+all_mammals_data_selected_species <- all_mammals_data |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Mammals", .before = study_source_citation)
+
+# Invertebrates
+all_invertebrates_data_selected_species <- all_invertebrates_data |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Invertebrates", .before = study_source_citation)
+
+all_data_selected_species <- rbind(all_lichen_data_selected_species,
+                                   all_fungi_data_selected_species,
+                                   all_bryophytes_data_selected_species,
+                                   all_birds_data_selected_species,
+                                   all_mammals_data_selected_species,
+                                   all_invertebrates_data_selected_species)
+
+```
+
+## Interaction Counts by Species
+
+Create counts of all species interactions per tree species & genus by taxon group
+
+```{r counts}
+
+# Lichen
+lichen_interaction_count_species <- all_lichen_data_selected_species |>
+  dplyr::count(source_taxon_name) |>
+  dplyr::rename(Lichen = "n")
+
+# Fungi
+fungi_interaction_count_species <- all_fungi_data_selected_species |>
+  dplyr::count(source_taxon_name) |>
+  dplyr::rename(Fungi = "n")
+
+# Bryophytes
+bryophytes_interaction_count_species <- all_bryophytes_data_selected_species |>
+  dplyr::count(source_taxon_name) |>
+  dplyr::rename(Bryophytes = "n")
+
+# Birds
+birds_interaction_count_species <- all_birds_data_selected_species |>
+  dplyr::count(source_taxon_name) |>
+  dplyr::rename(Birds = "n")
+
+# Mammals
+mammals_interaction_count_species <- all_mammals_data_selected_species |>
+  dplyr::count(source_taxon_name) |>
+  dplyr::rename(Mammals = "n")
+
+# Invertebrates
+invertebrates_interaction_count_species <- all_invertebrates_data_selected_species |>
+  dplyr::count(source_taxon_name) |>
+  dplyr::rename(Invertebrates = "n")
+
+```
+
+## Table Species Interaction Counts
+
+```{r species_interaction_table}
+
+# Create complete table
+interaction_table_species <- lichen_interaction_count_species |> 
+  dplyr::full_join(
+    fungi_interaction_count_species, by = "source_taxon_name")|> 
+  dplyr::full_join(
+    bryophytes_interaction_count_species, by = "source_taxon_name") |>
+  dplyr::full_join(
+    birds_interaction_count_species, by = "source_taxon_name") |>
+  dplyr::full_join(
+    mammals_interaction_count_species, by = "source_taxon_name") |>
+  dplyr::full_join(
+    invertebrates_interaction_count_species, by = "source_taxon_name") |>
+  dplyr::rename("Species" = "source_taxon_name")
+
+
+# Order table alphabetically, including NA obs
+final_interaction_table_species <- interaction_table_species[order(interaction_table_species$Species), ]
+
+write.csv(x = final_interaction_table_species, 
+          file = glue::glue("C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Interaction Tables from R/final_interaction_table_species ", 
+                            gsub(":",".", (as.character(as.POSIXct(Sys.time())))), 
+                            ".csv"))
+
+species_interaction_xtable <- xtable::xtable(x = final_interaction_table_species)
+
+print(final_interaction_table_species)
+
+```
+
+## Source Analysis
+
+```{r}
+
+```
