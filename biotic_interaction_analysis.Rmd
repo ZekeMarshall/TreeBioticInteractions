@@ -66,6 +66,9 @@ mitchell2019_refs_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silvicu
 # Establish path to "AshEcol.xlsx" file
 mitchell2014_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2014) - Fraxinus excelsior/AshEcol.xlsx"
 
+# Establish path to "epd-access-distribution-20171031.mdb" file
+pollen_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Paleoecology/epd-access-distribution-20171031.mdb"
+
 ```
 
 ## Native Trees PLANTATT
@@ -102,7 +105,7 @@ A list of 43 species is returned from these criteria compared to the 46 trees ma
 
 ```{r native_species_and_genus}
 
-native_trees_manual <- c(
+native_trees <- c(
   "Acer campestre",
   "Alnus glutinosa",
   "Arbutus unedo",
@@ -182,7 +185,72 @@ native_trees_genus <- c(
   "Ulmus",
   "Viburnum")
 
-tree_genus_and_species <- c(native_trees_genus, native_trees_manual)
+nonnative_introduced_trees <- c(
+  "Acer platanoides",
+  "Acer pseudoplatanus",
+  "Juglans regia",
+  "Castanea sativa",
+  "Quercus cerris",
+  "Populus alba",
+  "Populus × canescens",
+  "Prunus domestica",
+  "Platanus x hispanica",
+  "Pyrus communis",
+  "Quercus ilex",
+  "Araucaria araucana",
+  "Ulmus × hollandica 'Vegeta'",
+  "Aesculus hippocastanum",
+  "Prunus cerasus",
+  "Prunus cerasifera",
+  "Malus x domestica",
+  "Cedrus libani"
+)
+
+forestry_conifer_trees <- c(
+  "Pinus nigra",
+  "Pinus contorta",
+  "Pinus peuce",
+  "Pinus pinaster",
+  "Pinus radiata",
+  "Pinus strobus",
+  "Picea abies",
+  "Oriental spruce",
+  "Picea omorika",
+  "Picea sitchensis",
+  "Pseudotsuga menziesii",
+  "Larix × marschlinsii",
+  "Larix kaempferi",
+  "Larix decidua",
+  "Thuja plicata",
+  "Cryptomeria japonica",
+  "Abies alba",
+  "Abies grandis",
+  "Abies procera",
+  "Abies nordmanniana",
+  "Abies amabilis",
+  "Cupressus × leylandii",
+  "Tsuga heterophylla",
+  "Sequoiadendron giganteum",
+  "Sequoia sempervirens",
+  "Chamaecyparis lawsoniana"
+)
+
+forestry_broadleaved_trees <- c(
+  "Acer macrophyllum",
+  "Nothofagus obliqua",
+  "Quercus rubra",
+  "Nothofagus alpina",
+  "Alnus rubra",
+  "Alnus incana",
+  "Alnus cordata",
+  "Eucalyptus nitens",
+  "Eucalyptus gunnii",
+  "Juglans nigra"
+)
+
+
+
+tree_genus_and_species <- c(native_trees_genus, native_trees)
 
 ```
 
@@ -192,7 +260,10 @@ tree_genus_and_species <- c(native_trees_genus, native_trees_manual)
 
 # selected_species <- c("Castanea sativa")
 
-selected_species <- native_trees_manual
+selected_species <- c(native_trees, 
+                      nonnative_introduced_trees,
+                      forestry_conifer_trees,
+                      forestry_broadleaved_trees)
 
 ```
 
@@ -835,15 +906,15 @@ Here the entire GBID dataset (downloaded 13-08-2021) is read, yielding the compl
 
 # *** Uncomment if required ***
 
-# # Read entire GBID database if required
-# gbid_all_interactions <- data.table::fread(gbid_path)
-# 
-# # Filter entire GBID database for native tree species
-# gbid_selected_species_all_interactions_manual <- gbid_all_interactions |>
-#   dplyr::filter(sourceTaxonName %in% selected_species | targetTaxonName %in% selected_species)
-# 
-# # Write a .csv containing only interactions with selected species
-# write.csv(x = gbid_tree_all_interactions_manual, file = gbid_path_selected_species)
+# Read entire GBID database if required
+gbid_all_interactions <- data.table::fread(gbid_path)
+
+# Filter entire GBID database for native tree species
+gbid_selected_species_all_interactions_manual <- gbid_all_interactions |>
+  dplyr::filter(sourceTaxonName %in% selected_species | targetTaxonName %in% selected_species)
+
+# Write a .csv containing only interactions with selected species
+write.csv(x = gbid_selected_species_all_interactions_manual, file = gbid_path_selected_species)
 
 # Read the pre-filtered data for interactions associated with selected species
 gbid_selected_species_all_interactions_raw <- read.csv(file = gbid_path_selected_species)
@@ -1070,6 +1141,7 @@ invertebrates_interaction_count_species <- all_invertebrates_data_selected_speci
   dplyr::count(source_taxon_name) |>
   dplyr::rename(Invertebrates = "n")
 
+
 ```
 
 ## Table Species Interaction Counts
@@ -1103,7 +1175,25 @@ species_interaction_xtable <- xtable::xtable(x = final_interaction_table_species
 
 print(final_interaction_table_species)
 
+# Create summary data frame
+final_interaction_table_species_tidy <- final_interaction_table_species |> 
+  tidyr::pivot_longer(cols = Lichen:Invertebrates,
+                      names_to = "Taxon_group")
+
+# write.csv(final_interaction_table_species_tidy, file = "final_interaction_table_species.csv",
+#           row.names = FALSE)
+
 ```
+
+## Age of Introduction
+
+```{r pollen}
+
+# Read pollen data
+# pollen_data_raw <- Hmisc::mdb.get(file = pollen_path)
+
+```
+
 
 ## Source Analysis
 
