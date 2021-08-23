@@ -66,8 +66,22 @@ mitchell2019_refs_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silvicu
 # Establish path to "AshEcol.xlsx" file
 mitchell2014_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2014) - Fraxinus excelsior/AshEcol.xlsx"
 
-# Establish path to "epd-access-distribution-20171031.mdb" file
-pollen_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Paleoecology/epd-access-distribution-20171031.mdb"
+# Establish path to "GBR_TRSH.csv" file
+pollen_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Paleoecology/GBR_TRSH.csv"
+
+# Establish path to "Introduction_Years.xlsx" file
+intro_years_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Paleoecology/Introduction_Years.xlsx"
+
+rerun <- "No"
+```
+
+## Options
+
+```{r options}
+
+# Select "Yes" if you wish to re-read the entire GBID dataset based for a new set
+# of selected species. Select "No" if you wish to use the GBID data from the previous run.
+# rerun <- c("No")
 
 ```
 
@@ -906,18 +920,26 @@ Here the entire GBID dataset (downloaded 13-08-2021) is read, yielding the compl
 
 # *** Uncomment if required ***
 
-# Read entire GBID database if required
-gbid_all_interactions <- data.table::fread(gbid_path)
+if(rerun == "Yes") {
 
-# Filter entire GBID database for native tree species
-gbid_selected_species_all_interactions_manual <- gbid_all_interactions |>
-  dplyr::filter(sourceTaxonName %in% selected_species | targetTaxonName %in% selected_species)
+  # Read entire GBID database if required
+  gbid_all_interactions <- data.table::fread(gbid_path)
+  
+  # Filter entire GBID database for native tree species
+  gbid_selected_species_all_interactions_manual <- gbid_all_interactions |>
+    dplyr::filter(sourceTaxonName %in% selected_species | targetTaxonName %in% selected_species)
+  
+  # Write a .csv containing only interactions with selected species
+  write.csv(x = gbid_selected_species_all_interactions_manual, file = gbid_path_selected_species)
+  
+  # Read the pre-filtered data for interactions associated with selected species
+  gbid_selected_species_all_interactions_raw <- read.csv(file = gbid_path_selected_species)
 
-# Write a .csv containing only interactions with selected species
-write.csv(x = gbid_selected_species_all_interactions_manual, file = gbid_path_selected_species)
-
-# Read the pre-filtered data for interactions associated with selected species
-gbid_selected_species_all_interactions_raw <- read.csv(file = gbid_path_selected_species)
+} else if (rerun == "No") {
+  
+  gbid_selected_species_all_interactions_raw <- read.csv(file = gbid_path_selected_species)
+  
+}
 
 ```
 
@@ -1185,18 +1207,127 @@ final_interaction_table_species_tidy <- final_interaction_table_species |>
 
 ```
 
+## Native Trees Table
+
+```{r native_table}
+
+final_interaction_table_species_native <- final_interaction_table_species |> 
+  dplyr::filter(Species %in% native_trees)
+
+print(final_interaction_table_species_native)
+
+```
+
+## Non-native Introduced Trees Table
+
+```{r nonnative_table}
+
+final_interaction_table_species_nonnative <- final_interaction_table_species |> 
+  dplyr::filter(Species %in% nonnative_introduced_trees)
+
+print(final_interaction_table_species_nonnative)
+
+```
+
+## Forestry Conifer Trees Table
+
+```{r forestry_conifer_table}
+
+final_interaction_table_species_conifer <- final_interaction_table_species |> 
+  dplyr::filter(Species %in% forestry_conifer_trees)
+
+print(final_interaction_table_species_conifer)
+
+```
+
+## Forestry Broadleaved Trees Table
+
+```{r forestry_broad_table}
+
+final_interaction_table_species_broad <- final_interaction_table_species |> 
+  dplyr::filter(Species %in% forestry_broadleaved_trees)
+
+print(final_interaction_table_species_broad)
+
+```
+
+## Red List
+
+```{r redlist}
+
+```
+
 ## Age of Introduction
+
+Read data extracted from the European Pollen Database (EPD)
 
 ```{r pollen}
 
 # Read pollen data
-# pollen_data_raw <- Hmisc::mdb.get(file = pollen_path)
+# pollen_data_raw <- read.csv(file = pollen_path)
+# 
+# tree_intro <- pollen_data_raw |> 
+#   dplyr::group_by(VarName) |> 
+#   dplyr::slice_max(AgeBP)
+# 
+# write.csv(x = tree_intro, file = "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Paleoecology/pollen_tree_max.csv")
 
 ```
 
+Read collated data for the length of time each species has been growing in the UK
+
+```{r intro_years}
+
+introduction_data_raw <- readxl::read_xlsx(path = intro_years_path,
+                                           sheet = "Tree_Year_Final")
+
+introduction_data <- introduction_data_raw |> 
+  dplyr::select(Species, `Time growing in Britain [years before 2021]`) |> 
+  dplyr::rename(Growing_Time = `Time growing in Britain [years before 2021]`)
+
+```
+
+Investigate whether the number of species per taxon group associated with each tree species is correlated with the length of time each tree species has been growing in Britain.
+
+```{r species_time_analysis}
+
+species_time_data <- final_interaction_table_species_tidy |> 
+  dplyr::left_join(introduction_data, by = "Species") |> 
+  dplyr::rename(Associated_Species = value) |> 
+  dplyr::mutate(
+    Tree_group = dplyr::case_when(
+      Species %in% native_trees ~ "Native",
+      Species %in% nonnative_introduced_trees ~ "Introduced",
+      Species %in% forestry_broadleaved_trees ~ "Forestry broadleaves",
+      Species %in% forestry_conifer_trees ~ "Forestry conifers",
+      TRUE ~ as.character(Species)
+      
+    )
+  )
+
+
+pal <- wesanderson::wes_palette("Zissou1", 4, type = "continuous")
+
+foo <- ggplot2::ggplot(species_time_data,
+                       mapping = ggplot2::aes(x = Growing_Time,
+                                             y = Associated_Species,
+                                             color = Tree_group,
+                                             label = Species)) +
+  ggplot2::geom_point() +
+  ggplot2::facet_wrap(~Taxon_group, scales = "free_y") +
+  ggplot2::scale_y_continuous(trans='log10') +
+  ggplot2::scale_x_continuous(trans='log10')# +
+  # ggplot2::scale_color_brewer(pal)
+
+plotly::ggplotly(foo,
+                 tooltip = c("Species", "Tree_group", 
+                             "Growing_Time", "Associated_Species")
+                 )
+
+```
 
 ## Source Analysis
 
-```{r}
+```{r sources}
 
 ```
