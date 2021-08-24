@@ -1,0 +1,83 @@
+---
+title: "The Trees of the British Isles and their Biotic Interactions"
+author: "Zeke Marshall"
+date: March 22, 2005
+output: 
+  ioslides_presentation:
+    fig_height: 5
+    fig_width: 10
+    keep_md: no
+    logo: img/uni.png
+    smaller: no
+    widescreen: yes
+    self_contained: false
+    lib_dir: libs
+    fig_retina: null
+---
+
+# Section 1
+
+width: 1920
+height: 1080
+
+## Subsection 1.1
+
+- Turn off alarm
+- Get out of bed
+
+## Subsection 1.2
+
+- Eat eggs
+- Drink coffee
+
+# Section 2
+
+## Subsection 2.1  {.flexbox .vcenter}
+
+```{r, echo=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
+
+data <- read.csv("C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/species_time_data.csv")
+
+foo <- ggplot2::ggplot(data,
+                       mapping = ggplot2::aes(x = Growing_Time,
+                                             y = Associated_Species,
+                                             color = Tree_group,
+                                             label = Species)) +
+  ggplot2::geom_point() +
+  ggplot2::facet_wrap(~Taxon_group, scales = "free_y") +
+  ggplot2::scale_y_continuous(trans='log10') +
+  ggplot2::scale_x_continuous(trans='log10') +
+  ggplot2::theme(
+    panel.background =  ggplot2::element_rect(fill='transparent'),
+    plot.background =  ggplot2::element_rect(fill='transparent', color=NA),
+    # panel.grid.major =  ggplot2::element_blank(),
+    # panel.grid.minor =  ggplot2::element_blank(),
+    legend.background =  ggplot2::element_rect(fill='transparent', color = NA),
+    legend.box.background =  ggplot2::element_rect(fill='transparent', color = NA),
+    legend.key = ggplot2::element_rect(fill = "transparent", color = NA),
+    legend.title.align = 0.5,
+    # legend.box.margin =  ggplot2::element_blank(), 
+    axis.line = ggplot2::element_line(size = 0.5, colour = "grey80"),
+    strip.background = ggplot2::element_rect(
+      color='transparent', 
+      fill='transparent', 
+      size=1.5, 
+      linetype="solid"
+     )
+  ) + 
+  ggsci::scale_color_npg()
+
+plotly::ggplotly(foo,
+                 tooltip = c("Species", "Tree_group",
+                             "Growing_Time", "Associated_Species")
+                 ) |>
+  plotly::config(displayModeBar = FALSE)
+
+```
+
+---
+
+## Subsection 2.2
+
+- Get in bed
+- Count sheep
