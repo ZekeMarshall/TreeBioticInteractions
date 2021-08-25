@@ -1,11 +1,12 @@
 ---
 title: "The Trees of the British Isles and their Biotic Interactions"
-subtitle: "A..."
+subtitle: ""
 author: "Zeke Marshall"
 institute: "University of Leeds"
 date: "25/08/2021 (updated: `r Sys.Date()`)"
 output:
   xaringan::moon_reader:
+    css: ["custom.css", "custom-fonts.css"]
     lib_dir: libs
     nature:
       highlightStyle: github
@@ -15,12 +16,9 @@ output:
 ---
 
 ```{r xaringanExtra, echo = FALSE}
-xaringanExtra::use_progress_bar(color = "#0051BA", location = "top")
+xaringanExtra::use_progress_bar(color = "#415E3E", location = "top")
 ```
 
----
-
-background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
@@ -30,9 +28,18 @@ options(htmltools.dir.version = FALSE)
 
 class: center, middle
 
-```{r, echo=FALSE, warning=FALSE, cache=FALSE, message=FALSE, out.width='100%'}
+```{r echo=FALSE, out.width = "40%", eval=TRUE}
+knitr::include_graphics("Images/oakartichoke.jpeg")
+```
 
-data <- read.csv("C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/species_time_data.csv")
+---
+
+## The Species-Time Relationship
+
+```{r, echo=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
+
+data <- read.csv("Output_Data/species_time_data.csv") |> 
+  dplyr::mutate_if(is.numeric, tidyr::replace_na, 0)
 
 foo <- ggplot2::ggplot(data,
                        mapping = ggplot2::aes(x = Growing_Time,
@@ -63,11 +70,15 @@ foo <- ggplot2::ggplot(data,
   ) + 
   ggsci::scale_color_npg()
 
-plotly::ggplotly(foo,
-                 tooltip = c("Species", "Tree_group",
-                             "Growing_Time", "Associated_Species")
-                 ) |>
+species_time_plotly <- plotly::ggplotly(foo,
+                                        width = 1000,
+                                        height = 500,
+                                        tooltip = c("Species", "Tree_group",
+                                                   "Growing_Time", "Associated_Species")
+                                        ) |>
   plotly::config(displayModeBar = FALSE)
+
+widgetframe::frameWidget(species_time_plotly)
 
 ```
 

@@ -1306,7 +1306,7 @@ species_time_data <- final_interaction_table_species_tidy |>
   )
 
 write.csv(x = species_time_data,
-          file = "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/species_time_data.csv",
+          file = "Output_Data/species_time_data.csv",
           row.names = FALSE)
 
 
