@@ -1,0 +1,53 @@
+---
+title: "TreePhenology"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load required packages
+library(reticulate)
+```
+
+## Testing the rinat package
+
+```{python get_data}
+
+# pip install git+git://github.com/JWCook/pyinaturalist-convert.git
+
+import pandas as pd
+
+import pyinaturalist
+
+from pyinaturalist import *
+
+# Establish list of selected species
+
+# Get observations for Quercus robur
+quercus_robur_fruiting = get_observations(taxon_name = "Quercus robur", term_id = "12", term_value_id = "14", place_id = "6857")
+
+
+quercus_robur_fruiting_df = pd.DataFrame.from_dict(quercus_robur_fruiting)
+
+
+results = quercus_robur_fruiting_df[["results"]]
+
+```
+
+## Convert to tidy format in R
+
+```{r tidy}
+
+foo <- py$results
+
+hoo <- foo |> 
+  dplyr::slice(1) |> 
+  tidyr::unnest()
+
+goo <- foo |> 
+  tidyr::unnest(cols = results)
+
+
+```
+
