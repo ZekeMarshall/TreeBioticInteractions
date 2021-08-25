@@ -1,40 +1,36 @@
 ---
 title: "The Trees of the British Isles and their Biotic Interactions"
+subtitle: "A..."
 author: "Zeke Marshall"
-date: March 22, 2005
-output: 
-  ioslides_presentation:
-    fig_height: 5
-    fig_width: 10
-    keep_md: no
-    logo: img/uni.png
-    smaller: no
-    widescreen: yes
-    self_contained: false
+institute: "University of Leeds"
+date: "25/08/2021 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
     lib_dir: libs
-    fig_retina: null
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: '16:9'
 ---
 
-# Section 1
+```{r xaringanExtra, echo = FALSE}
+xaringanExtra::use_progress_bar(color = "#0051BA", location = "top")
+```
 
-width: 1920
-height: 1080
+---
 
-## Subsection 1.1
+background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
 
-- Turn off alarm
-- Get out of bed
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
 
-## Subsection 1.2
+---
 
-- Eat eggs
-- Drink coffee
+class: center, middle
 
-# Section 2
-
-## Subsection 2.1  {.flexbox .vcenter}
-
-```{r, echo=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, cache=FALSE, message=FALSE, out.width='100%'}
 
 data <- read.csv("C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/species_time_data.csv")
 
@@ -75,9 +71,11 @@ plotly::ggplotly(foo,
 
 ```
 
+
 ---
 
-## Subsection 2.2
+---
 
-- Get in bed
-- Count sheep
+---
+
+---
