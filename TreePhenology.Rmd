@@ -172,16 +172,31 @@ calendar <- ggplot2::ggplot(fruiting_r_cleaned,
 
 ```
 
-```{r save_ridgeline}
+```{r save_ridgeline, message=FALSE, warning=FALSE, include=FALSE}
 
 aspect_ratio <- 0.8
 height <- 13
 ggplot2::ggsave("calendar.png", height = height, width = height * aspect_ratio)
 
-calendar
-
-
-
 ```
 
 
+```{r obs_count}
+
+fruiting_count <- fruiting_r_cleaned |>
+  dplyr::count(species)
+
+count_barchart <- ggplot2::ggplot(fruiting_r_cleaned, ggplot2::aes(forcats::fct_rev(species))) +
+  ggplot2::geom_bar() +
+  ggplot2::coord_flip() +
+  ggplot2::xlab("Species") +
+  ggplot2::ylab("Number of credible observations [-]")
+
+aspect_ratio_bc <- 2
+height_bc <- 8
+ggplot2::ggsave("count_barchart.png", height = height_bc, width = height_bc * aspect_ratio_bc)
+
+
+count_barchart
+
+```
