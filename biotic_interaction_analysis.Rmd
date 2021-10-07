@@ -19,58 +19,61 @@ The aim of this analysis is to identify the number of biotic interactions betwee
 ```{r paths message=FALSE}
 
 # Establish path to "PLANTATT_19_Nov_08.xls" file
-plantatt_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Plantae/PLANTATT_19_Nov_08/PLANTATT_19_Nov_08.xls"
+plantatt_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Plantae/PLANTATT_19_Nov_08/PLANTATT_19_Nov_08.xls"
 
 # Establish path to "lichen_species_database10Aug2021.csv" file
-native_lichens_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Lichens/lichen_species_database10Aug2021.csv"
+native_lichens_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Lichens/lichen_species_database10Aug2021.csv"
 
 # Establish path to "fungi_species_names.xlsx" file
-native_fungi_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Fungi/fungi_species_names.xlsx"
+native_fungi_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Fungi/fungi_species_names.xlsx"
 
 # Establish path to "Bryoatt_updated_2017.xls" file
-native_bryophytes_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Bryophytes/Bryoatt_updated_2017.xls"
+native_bryophytes_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Bryophytes/Bryoatt_updated_2017.xls"
 
 # Establish path to "BOU_British_List_9th_post52_v5-IOC11_1_30-June-2021.xlsx" file
-native_birds_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Birds/BOU_British_List_9th_post52_v5-IOC11_1_30-June-2021.xlsx"
+native_birds_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Birds/BOU_British_List_9th_post52_v5-IOC11_1_30-June-2021.xlsx"
 
 # Establish path to "MammalSociety_RedList_30June21.xlsx" file
-native_mammals_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mammals/MammalSociety_RedList_30June21.xlsx"
+native_mammals_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mammals/MammalSociety_RedList_30June21.xlsx"
 
 # Establish path to "..." file
-native_insects_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Insects/"
+native_insects_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Insects/"
 
 # Establish path to "interactions-13-08-2021.csv" file 
-gbid_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/GBID/interactions-13-08-2021.csv"
+gbid_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/GBID/interactions-13-08-2021.csv"
 
 # Establish path to "interactions_selected_species-13-08-2021.csv" file
-gbid_path_selected_species <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/GBID/interactions_nativetrees-13-08-2021.csv"
+gbid_path_selected_species <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/GBID/interactions_nativetrees-13-08-2021.csv"
 
 # Establish path to "DBIFInteractionFrequencies.csv" file
-dbif_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Insects/33a825f3-27cb-4b39-b59c-0f8182e8e2e4/33a825f3-27cb-4b39-b59c-0f8182e8e2e4/data/DBIFInteractionFrequencies.csv"
+dbif_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Insects/33a825f3-27cb-4b39-b59c-0f8182e8e2e4/33a825f3-27cb-4b39-b59c-0f8182e8e2e4/data/DBIFInteractionFrequencies.csv"
 
 # Establish path to "Lichen records by host tree.xlsx" file
-bls_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Lichens/Lichen records by host tree.xlsx"
+bls_data_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Lichens/Lichen records by host tree.xlsx"
 
 # Establish path to "Fungi_associations.csv" file
-frdbi_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Fungi/Fungi_associations.csv"
+frdbi_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Fungi/Fungi_associations.csv"
 
 # Establish path to "OakEcol_Species.csv" file
-mitchell2019_oak_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_Species.csv"
+mitchell2019_oak_data_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_Species.csv"
 
 # Establish path to "OakEcol_Alternative_Trees.csv" file
-mitchell2019_other_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_Alternative_Trees.csv"
+mitchell2019_other_data_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_Alternative_Trees.csv"
 
 # Establish path to "OakEcol_References.csv" file
-mitchell2019_refs_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_References.csv"
+mitchell2019_refs_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2019) - Quercus/data/OakEcol_References.csv"
 
 # Establish path to "AshEcol.xlsx" file
-mitchell2014_data_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2014) - Fraxinus excelsior/AshEcol.xlsx"
+mitchell2014_data_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Mitchell et al (2014) - Fraxinus excelsior/AshEcol.xlsx"
 
 # Establish path to "GBR_TRSH.csv" file
-pollen_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Paleoecology/GBR_TRSH.csv"
+pollen_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Paleoecology/GBR_TRSH.csv"
 
 # Establish path to "Introduction_Years.xlsx" file
-intro_years_path <- "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Paleoecology/Introduction_Years.xlsx"
+intro_years_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Paleoecology/Introduction_Years.xlsx"
+
+# Establish path to "NFI_Web_Data.xlsx" file
+area_path <- "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/National Forest Inventory (NFI)/NFI_Web_Data.xlsx"
 
 rerun <- "No"
 ```
@@ -606,7 +609,7 @@ dbif_insects <- unique(dbif_data$target_taxon_name)
 
 Analyse Data from the British Lichen Society (BLS)
 
-Code fixes detemined in conjunction with the BLS. This can be removed when the updated data is available.
+Code fixes determined in conjunction with the BLS. This can be removed when the updated data is available.
 
 ```{r bls}
 
@@ -1189,7 +1192,7 @@ interaction_table_species <- lichen_interaction_count_species |>
 final_interaction_table_species <- interaction_table_species[order(interaction_table_species$Species), ]
 
 write.csv(x = final_interaction_table_species, 
-          file = glue::glue("C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Interaction Tables from R/final_interaction_table_species ", 
+          file = glue::glue("C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Biotic Interactions/Interaction Tables from R/final_interaction_table_species ", 
                             gsub(":",".", (as.character(as.POSIXct(Sys.time())))), 
                             ".csv"))
 
@@ -1257,7 +1260,7 @@ print(final_interaction_table_species_broad)
 
 ```
 
-## Age of Introduction
+## Species-Time Relationship
 
 Read data extracted from the European Pollen Database (EPD)
 
@@ -1270,7 +1273,7 @@ Read data extracted from the European Pollen Database (EPD)
 #   dplyr::group_by(VarName) |> 
 #   dplyr::slice_max(AgeBP)
 # 
-# write.csv(x = tree_intro, file = "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Paleoecology/pollen_tree_max.csv")
+# write.csv(x = tree_intro, file = "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Paleoecology/pollen_tree_max.csv")
 
 ```
 
@@ -1312,9 +1315,9 @@ write.csv(x = species_time_data,
 
 foo <- ggplot2::ggplot(species_time_data,
                        mapping = ggplot2::aes(x = Growing_Time,
-                                             y = Associated_Species,
-                                             color = Tree_group,
-                                             label = Species)) +
+                                              y = Associated_Species,
+                                              color = Tree_group,
+                                              label = Species)) +
   ggplot2::geom_point() +
   ggplot2::facet_wrap(~Taxon_group, scales = "free_y") +
   ggplot2::scale_y_continuous(trans='log10') +
@@ -1340,7 +1343,7 @@ foo <- ggplot2::ggplot(species_time_data,
   ggsci::scale_color_npg()
 
 
-# ggplot2::ggsave(filename = "C:/Users/earzm/OneDrive - University of Leeds/Silviculture/Images/time-interactions_plot.png", plot = foo,
+# ggplot2::ggsave(filename = "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/Images/time-interactions_plot.png", plot = foo,
 #                 width = 7,
 #                 height = 4,
 #                 units = "in",
@@ -1352,6 +1355,54 @@ plotly::ggplotly(foo,
                  )
 
 ```
+## Species-Area Relationship
+
+```{r species_area}
+
+area_data <- readxl::read_xlsx(path = area_path,
+                               sheet = "All_Data") |> 
+  dplyr::select(-Year)
+
+species_area_df <- final_interaction_table_species_tidy |> 
+  dplyr::left_join(area_data, by = "Species") |> 
+  dplyr::rename("Associated_Species" = "value") |>
+  dplyr::mutate(
+    Tree_group = dplyr::case_when(
+      Species %in% native_trees ~ "Native",
+      Species %in% nonnative_introduced_trees ~ "Introduced",
+      Species %in% forestry_broadleaved_trees ~ "Forestry broadleaves",
+      Species %in% forestry_conifer_trees ~ "Forestry conifers",
+      TRUE ~ as.character(Species)
+      
+    )
+  ) |> 
+  dplyr::filter(!is.na(`Area [1000 ha]`))
+
+# write.csv(x = species_area_df,
+#           row.names = FALSE,
+#           file = "C:/Users/Zeke Marshall/OneDrive - University of Leeds/Silviculture/National Forest Inventory (NFI)/species_area_df.csv")
+
+species_area_plot <- ggplot2::ggplot(data = species_area_df,
+                                     mapping = ggplot2::aes(x = `Area [1000 ha]`,
+                                                            y = Associated_Species,
+                                                            color = Tree_group,
+                                                            label = Species)) +
+  ggplot2::geom_point() +
+  ggplot2::facet_wrap(~Taxon_group, scales = "free_y") +
+  ggplot2::scale_y_continuous(trans='log10') +
+  ggplot2::scale_x_continuous(trans='log10')
+
+
+plotly::ggplotly(species_area_plot,
+                 tooltip = c("Species", "Tree_group",
+                             "Area [1000 ha]", "Associated_Species")
+                 )
+  
+
+
+```
+
+
 
 ## Endemic Species
 
