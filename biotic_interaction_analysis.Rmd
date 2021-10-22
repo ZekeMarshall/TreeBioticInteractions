@@ -1480,6 +1480,7 @@ plotly::ggplotly(foo,
                  )
 
 ```
+
 ## Species-Area Relationship
 
 ```{r species_area}
@@ -1526,8 +1527,6 @@ plotly::ggplotly(species_area_plot,
 
 
 ```
-
-
 
 ## Obligate Species
 
