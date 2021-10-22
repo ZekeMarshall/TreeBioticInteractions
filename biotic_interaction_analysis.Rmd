@@ -335,6 +335,12 @@ native_mammals_vector <- native_mammals$`Taxonomic name` |> as.character()
 
 # Get native insect names
 
+# Get native plant names
+native_plants <- readxl::read_xls(path = plantatt_path, sheet = "Data")
+
+native_plants_vector <- native_plants$`Taxon name` |> as.character()
+
+# Get native 
 
 ```
 
@@ -509,7 +515,7 @@ mitchell_tree_all_interactions <- rbind(mitchell2019_data_final, mitchell2014_da
 
 # Collate unique records, and form a vector/list of sources
 # This method needs to change
-mitchell_tree_all_interactions <- aggregate(mitchell_tree_all_interactions[3], mitchell_tree_all_interactions[-3], unique)
+# mitchell_tree_all_interactions <- aggregate(mitchell_tree_all_interactions[3], mitchell_tree_all_interactions[-3], unique)
 
 # Temporarily get invertebrate names from Mitchell 2014 data, rather than a complete UK list
 mitchell_2014_invert_other <- mitchell2014_data_other |> 
@@ -594,7 +600,8 @@ dbif_data <- read.csv(file = dbif_path) |>
   dplyr::rename(source_taxon_name = "Plant.Species.Name", 
                 target_taxon_name = "Insect.Species.Name", 
                 study_source_citation = "DBIF.Source") |> 
-  dplyr::distinct()
+  dplyr::distinct() |> 
+  dplyr::mutate(study_source_citation = "DBIF")
 
 dbif_insects <- unique(dbif_data$target_taxon_name)
 
@@ -878,9 +885,7 @@ frdbi_data_cleaned <- frdbi_data_assoc |>
 
 ```
 
-## GBID Data
-
-Database (GBID)
+## GloBI Data
 
 Here we filter only for native trees, and not their genus. As there is no comprehensive data for the location associated with each observation, selecting the interactions of species and native tree genus may not relate to species of tree which are native or naturalised in the British Isles.
 
@@ -948,17 +953,18 @@ Data obtained from the bulk GBID download is bilateral, i.e. each interaction is
 ```{r sort_gbid}
 
 gbid_selected_species_all_interactions_unsorted <- gbid_selected_species_all_interactions_raw |>
-  dplyr::select(sourceTaxonName, targetTaxonName, sourceCitation)|> 
-  dplyr::rename(study_source_citation = "sourceCitation")
+  dplyr::select(sourceTaxonSpeciesName, targetTaxonSpeciesName, sourceCitation)|> 
+  dplyr::rename(study_source_citation = "sourceCitation") |> 
+  dplyr::mutate(study_source_citation = "GloBI")
 
 gbid_selected_species_all_interactions_sorted <- gbid_selected_species_all_interactions_unsorted |> 
   dplyr::mutate(
-    source_taxon_name = ifelse(sourceTaxonName %in% selected_species,
-                               sourceTaxonName, 
-                               targetTaxonName),
-    target_taxon_name = ifelse(targetTaxonName %in% selected_species,
-                               sourceTaxonName,
-                               targetTaxonName)
+    source_taxon_name = ifelse(sourceTaxonSpeciesName %in% selected_species,
+                               sourceTaxonSpeciesName, 
+                               targetTaxonSpeciesName),
+    target_taxon_name = ifelse(targetTaxonSpeciesName %in% selected_species,
+                               sourceTaxonSpeciesName,
+                               targetTaxonSpeciesName)
     ) |> 
   dplyr::select(source_taxon_name, target_taxon_name, study_source_citation) |> 
   dplyr::filter(source_taxon_name != "no name",
@@ -970,44 +976,52 @@ gbid_selected_species_all_interactions_final <- gbid_selected_species_all_intera
 
 ```
 
-## GBID Filter Native Species
+## GloBI Filter Native Species
 
 Here the data is filtered by searching for names which occur in the most reliable lists of native species of lichen, fungi, bryophytes, birds, mammals, and insects available.
 
 ```{r gbid_to_taxon}
-# Get data for interactions between native species of lichen and native species of tree from the GBID
+# Lichen
 gbid_lichen_interations <- gbid_selected_species_all_interactions_final |> 
   dplyr::filter(target_taxon_name %in% native_lichen_vector) |> 
   dplyr::distinct()
 
-# Get data for interactions between native species of fungi and native species of tree from the GBID
+# Fungi
 gbid_fungi_interations <- gbid_selected_species_all_interactions_final |> 
   dplyr::filter(target_taxon_name %in% native_fungi_vector) |> 
   dplyr::distinct()
 
-# Get data for interactions between native species of bryophyte and native species of tree from the GBID
+# Bryophytes
 gbid_bryophytes_interations <- gbid_selected_species_all_interactions_final |> 
   dplyr::filter(target_taxon_name %in% native_bryophytes_vector) |> 
   dplyr::distinct()
 
-# Get data for interactions between native species of birds and native species of tree from the GBID
+# Birds
 gbid_birds_interations <- gbid_selected_species_all_interactions_final |> 
   dplyr::filter(target_taxon_name %in% native_birds_vector) |> 
   dplyr::distinct()
 
-# Get data for interactions between native species of mammals and native species of tree from the GBID
+# Mammals
 gbid_mammals_interations <- gbid_selected_species_all_interactions_final |> 
   dplyr::filter(target_taxon_name %in% native_mammals_vector) |> 
   dplyr::distinct()
 
-# Invertebrates
 # Temporarily filter GBID data for invertebrates using Mitchell inverts & DBIF insects
 temp_inverts <- c(mitchell_invertebrates, dbif_insects) |> 
   unique()
 
+# Invertebrates
 gbid_invertebrates_interations <- gbid_selected_species_all_interactions_final |>
   dplyr::filter(target_taxon_name %in% temp_inverts) |>
   dplyr::distinct()
+
+# Plants
+gbid_plants_interations <- gbid_selected_species_all_interactions_final |>
+  dplyr::filter(target_taxon_name %in% native_plants_vector) |>
+  dplyr::distinct()
+
+# Myxomycetes
+
 
 ```
 
@@ -1018,73 +1032,40 @@ I need to ensure that all data sources are either filtered for native trees by t
 ```{r collate_data}
 
 # Lichen
-# Bind data
 all_lichen_data <- rbind(bls_data_cleaned, 
                          gbid_lichen_interations,
                          mitchell_tree_lichen_interations)
 
-# Aggregate unique interactions and collate multiple sources into a list
-all_lichen_data <- aggregate(all_lichen_data[3], 
-                             all_lichen_data[-3], 
-                             unique)
-
 # Fungi
-# Bind data
 all_fungi_data <- rbind(frdbi_data_cleaned, 
                         gbid_fungi_interations,
                         mitchell_tree_fungi_interations)
 
-# Aggregate unique interactions and collate multiple sources into a list
-all_fungi_data <- aggregate(all_fungi_data[3], 
-                            all_fungi_data[-3], 
-                            unique)
-
 # Bryophytes
-# Bind data
 all_bryophytes_data <- rbind(gbid_bryophytes_interations,
                              mitchell_tree_bryophytes_interations)
 
-# Aggregate unique interactions and collate multiple sources into a list
-all_bryophytes_data <- aggregate(all_bryophytes_data[3], 
-                                 all_bryophytes_data[-3], 
-                                 unique)
-
-
 # Birds
-# Bind data
 all_birds_data <- rbind(gbid_birds_interations,
                         mitchell_tree_birds_interations)
 
-# Aggregate unique interactions and collate multiple sources into a list
-all_birds_data <- aggregate(all_birds_data[3], 
-                            all_birds_data[-3], 
-                            unique)
-
 # Mammals
-# Bind data
 all_mammals_data <- rbind(gbid_mammals_interations,
                           mitchell_tree_mammals_interations)
 
-# Aggregate unique interactions and collate multiple sources into a list
-all_mammals_data <- aggregate(all_mammals_data[3], 
-                              all_mammals_data[-3], 
-                              unique)
-
 # Invertebrates
-# Bind data
 all_invertebrates_data <- rbind(dbif_data,
                                 gbid_invertebrates_interations,
                                 mitchell_tree_invertebrates_interations)
 
-# Aggregate unique interactions and collate multiple sources into a list
-all_invertebrates_data <- aggregate(all_invertebrates_data[3], 
-                                    all_invertebrates_data[-3], 
-                                    unique)
+# Plants
+all_plants_data <- rbind(gbid_plants_interations)
 
+# Myxomycetes
 
 ```
 
-## Final Tidy Data Frame
+## Final Tidy Data Frame - unaggregated
 
 ```{r final_data}
 
@@ -1118,13 +1099,148 @@ all_invertebrates_data_selected_species <- all_invertebrates_data |>
   dplyr::filter(source_taxon_name %in% selected_species) |> 
   dplyr::mutate("Taxon_group" = "Invertebrates", .before = study_source_citation)
 
+# Plants
+all_plants_data_selected_species <- all_plants_data |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Plants", .before = study_source_citation)
+
+# Myxomycetes
+
 all_data_selected_species <- rbind(all_lichen_data_selected_species,
                                    all_fungi_data_selected_species,
                                    all_bryophytes_data_selected_species,
                                    all_birds_data_selected_species,
                                    all_mammals_data_selected_species,
-                                   all_invertebrates_data_selected_species)
+                                   all_invertebrates_data_selected_species,
+                                   all_plants_data_selected_species)
 
+```
+
+## Source Analysis
+
+```{r source_analysis}
+
+source_count <- all_data_selected_species |> 
+    dplyr::group_by(study_source_citation) |> 
+    dplyr::summarise(count = dplyr::n())
+
+
+```
+
+## Collate Aggregated Data For Each Taxon Group
+
+```{r collate_data_agg}
+
+# Lichen
+all_lichen_data_agg <- rbind(bls_data_cleaned, 
+                             gbid_lichen_interations,
+                             mitchell_tree_lichen_interations)
+
+all_lichen_data_agg <- aggregate(all_lichen_data_agg[3],
+                                 all_lichen_data_agg[-3],
+                                 unique)
+
+# Fungi
+all_fungi_data_agg <- rbind(frdbi_data_cleaned, 
+                            gbid_fungi_interations,
+                            mitchell_tree_fungi_interations)
+
+all_fungi_data_agg <- aggregate(all_fungi_data_agg[3],
+                                all_fungi_data_agg[-3],
+                                unique)
+
+# Bryophytes
+all_bryophytes_data_agg <- rbind(gbid_bryophytes_interations,
+                                 mitchell_tree_bryophytes_interations)
+
+all_bryophytes_data_agg <- aggregate(all_bryophytes_data_agg[3],
+                                     all_bryophytes_data_agg[-3],
+                                     unique)
+
+
+# Birds
+all_birds_data_agg <- rbind(gbid_birds_interations,
+                            mitchell_tree_birds_interations)
+
+all_birds_data_agg <- aggregate(all_birds_data_agg[3],
+                                all_birds_data_agg[-3],
+                                unique)
+
+# Mammals
+all_mammals_data_agg <- rbind(gbid_mammals_interations,
+                              mitchell_tree_mammals_interations)
+
+all_mammals_data_agg <- aggregate(all_mammals_data_agg[3],
+                                  all_mammals_data_agg[-3],
+                                  unique)
+
+# Invertebrates
+all_invertebrates_data_agg <- rbind(dbif_data,
+                                    gbid_invertebrates_interations,
+                                    mitchell_tree_invertebrates_interations)
+
+all_invertebrates_data_agg <- aggregate(all_invertebrates_data_agg[3],
+                                        all_invertebrates_data_agg[-3],
+                                        unique)
+
+# Plants
+all_plants_data_agg <- rbind(gbid_plants_interations)
+
+all_plants_data_agg <- aggregate(all_plants_data_agg[3],
+                                 all_plants_data_agg[-3],
+                                 unique)
+
+
+```
+
+## Final Tidy Data Frame - aggregated
+
+```{r final_data}
+
+# Lichen
+all_lichen_data_selected_species_agg <- all_lichen_data_agg |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Lichen", .before = study_source_citation)
+
+# Fungi
+all_fungi_data_selected_species_agg <- all_fungi_data_agg |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Fungi", .before = study_source_citation)
+
+# Bryophytes
+all_bryophytes_data_selected_species_agg <- all_bryophytes_data_agg |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Bryophytes", .before = study_source_citation)
+
+# Birds
+all_birds_data_selected_species_agg <- all_birds_data_agg |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Birds", .before = study_source_citation)
+
+# Mammals
+all_mammals_data_selected_species_agg <- all_mammals_data_agg |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Mammals", .before = study_source_citation)
+
+# Invertebrates
+all_invertebrates_data_selected_species_agg <- all_invertebrates_data_agg |> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Invertebrates", .before = study_source_citation)
+
+# Plants
+all_plants_data_selected_species_agg <- all_plants_data_agg|> 
+  dplyr::filter(source_taxon_name %in% selected_species) |> 
+  dplyr::mutate("Taxon_group" = "Plants", .before = study_source_citation)
+
+# Myxomycetes
+
+all_data_selected_species_agg <- rbind(all_lichen_data_selected_species_agg,
+                                       all_fungi_data_selected_species_agg,
+                                       all_bryophytes_data_selected_species_agg,
+                                       all_birds_data_selected_species_agg,
+                                       all_mammals_data_selected_species_agg,
+                                       all_invertebrates_data_selected_species_agg,
+                                       all_plants_data_selected_species_agg)
 ```
 
 ## Interaction Counts by Species
@@ -1134,34 +1250,41 @@ Create counts of all species interactions per tree species & genus by taxon grou
 ```{r counts}
 
 # Lichen
-lichen_interaction_count_species <- all_lichen_data_selected_species |>
+lichen_interaction_count_species <- all_lichen_data_selected_species_agg |>
   dplyr::count(source_taxon_name) |>
   dplyr::rename(Lichen = "n")
 
 # Fungi
-fungi_interaction_count_species <- all_fungi_data_selected_species |>
+fungi_interaction_count_species <- all_fungi_data_selected_species_agg |>
   dplyr::count(source_taxon_name) |>
   dplyr::rename(Fungi = "n")
 
 # Bryophytes
-bryophytes_interaction_count_species <- all_bryophytes_data_selected_species |>
+bryophytes_interaction_count_species <- all_bryophytes_data_selected_species_agg |>
   dplyr::count(source_taxon_name) |>
   dplyr::rename(Bryophytes = "n")
 
 # Birds
-birds_interaction_count_species <- all_birds_data_selected_species |>
+birds_interaction_count_species <- all_birds_data_selected_species_agg |>
   dplyr::count(source_taxon_name) |>
   dplyr::rename(Birds = "n")
 
 # Mammals
-mammals_interaction_count_species <- all_mammals_data_selected_species |>
+mammals_interaction_count_species <- all_mammals_data_selected_species_agg |>
   dplyr::count(source_taxon_name) |>
   dplyr::rename(Mammals = "n")
 
 # Invertebrates
-invertebrates_interaction_count_species <- all_invertebrates_data_selected_species |>
+invertebrates_interaction_count_species <- all_invertebrates_data_selected_species_agg |>
   dplyr::count(source_taxon_name) |>
   dplyr::rename(Invertebrates = "n")
+
+# Plants
+plants_interaction_count_species <- all_plants_data_selected_species_agg |>
+  dplyr::count(source_taxon_name) |>
+  dplyr::rename(Plants = "n")
+
+# Myxomycetes
 
 
 ```
@@ -1182,6 +1305,8 @@ interaction_table_species <- lichen_interaction_count_species |>
     mammals_interaction_count_species, by = "source_taxon_name") |>
   dplyr::full_join(
     invertebrates_interaction_count_species, by = "source_taxon_name") |>
+  dplyr::full_join(
+    plants_interaction_count_species, by = "source_taxon_name") |>
   dplyr::rename("Species" = "source_taxon_name")
 
 
@@ -1353,6 +1478,18 @@ plotly::ggplotly(foo,
 
 ```
 
-## Endemic Species
+## Obligate Species
 
-## Source Analysis
+```{r obligate_spp}
+
+spp_count <- all_data_selected_species_agg |> 
+  dplyr::filter(target_taxon_name != "") |> 
+  dplyr::count(target_taxon_name)
+
+spp_count_1 <- spp_count |> 
+  dplyr::filter(n == 1) |> 
+  dplyr::select(-n)
+
+obligate_spp <- all_data_selected_species_agg |> 
+  dplyr::filter(target_taxon_name %in% spp_count_1$target_taxon_name)
+```
